@@ -6,8 +6,8 @@ function init(){
     div.style.height = '100%';
     document.querySelector('.map').append(div);
     let map = new ymaps.Map("map", {
-        center: [55.76, 37.64],
-        zoom: 7
+        center: [56.749905, 37.141429],
+        zoom: 18
     });
 
     map.controls.remove('searchControl');

@@ -1,23 +1,17 @@
 const pageName = window.location.pathname.replace(/\/+$/, '');
 
 async function openPage(pageName) {
-    const selectedMenuItem = document.querySelector('.selected');
-    if (selectedMenuItem) {
-        selectedMenuItem.classList.remove('selected');
-    }
+    const getDefaultPageRoutePath = () => document.querySelector('.nav-link').dataset.routePath;
+
+    changeSelectedNavbarItem(pageName);
     const foundMenuItem = document.querySelector(`[data-route-path="${pageName}"]`);
-    const defaultPageRoutePath = document.querySelector('.nav-link').dataset.routePath;
-    if (foundMenuItem) {
-        foundMenuItem.classList.add('selected')
-    }
-    else {
+    if (!foundMenuItem) {
         console.log('page not found so default');
-        const foundMenuItem = document.querySelector(`[data-route-path='${defaultPageRoutePath}']`);
+        const foundMenuItem = document.querySelector(`[data-route-path='${getDefaultPageRoutePath()}']`);
         foundMenuItem.classList.add('selected')
     }
-    await fetchHTMLContent(foundMenuItem ? pageName : defaultPageRoutePath);
-    const event = new CustomEvent("PageReady");
-    document.dispatchEvent(event);
+
+    await fetchHTMLContent(foundMenuItem ? pageName : getDefaultPageRoutePath());
 }
 
 
@@ -72,19 +66,27 @@ const executeScriptsFromLoadedHTML = (scripts) => {
     document.body.append(div);
 };
 
-const popState = (event) => {
-    if (!event.state) return;
-    const htmlScripts = event.state.match(/<script\b[^>]*>(.*?)<\/script>/gm);
-    const html = getHTMLWithoutScripts(event.state, htmlScripts);
-    document.getElementById('content').innerHTML = html;
+const changeSelectedNavbarItem = (pageName) => {
     const selectedMenuItem = document.querySelector('.selected');
+    const foundMenuItem = document.querySelector(`[data-route-path="${pageName}"]`);
+
     if (selectedMenuItem) {
         selectedMenuItem.classList.remove('selected');
     }
-    const foundMenuItem = document.querySelector(`[data-route-path="${event.currentTarget.location.pathname}"]`);
     if (foundMenuItem) {
         foundMenuItem.classList.add('selected')
     }
+}
+
+const popState = (event) => {
+    if (!event.state) return;
+
+    const htmlScripts = event.state.match(/<script\b[^>]*>(.*?)<\/script>/gm);
+    const html = getHTMLWithoutScripts(event.state, htmlScripts);
+    document.getElementById('content').innerHTML = html;
+
+    changeSelectedNavbarItem(event.currentTarget.location.pathname);
+
     if (htmlScripts?.length) {
         executeScriptsFromLoadedHTML(htmlScripts);
     }
@@ -95,9 +97,12 @@ window.addEventListener('popstate', popState);
 
 
 for (const navLink of document.querySelectorAll('.nav-link')) {
-    navLink.addEventListener('click', el => {
+    navLink.addEventListener('click', _ => {
         openPage(navLink.dataset.routePath);
     });
+    navLink.querySelector('a').onclick = () => false;
 }
+
+
 
 openPage(pageName);
